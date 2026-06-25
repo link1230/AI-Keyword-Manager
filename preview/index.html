@@ -243,16 +243,12 @@ i[class*="ph"]{display:inline-flex;align-items:center;justify-content:center}
           <button class="btn" onclick="toggleDropdown('importMenu')"><i class="ph ph-download-simple"></i> <span data-i18n="import">Import</span></button>
           <div class="dropdown-menu" id="importMenu">
             <button onclick="importData('json')"><i class="ph ph-file-text"></i> JSON</button>
-            <button onclick="importData('md')"><i class="ph ph-file-text"></i> Markdown</button>
-            <button onclick="importData('csv')"><i class="ph ph-file-csv"></i> CSV</button>
           </div>
         </div>
         <div class="dropdown">
           <button class="btn" onclick="toggleDropdown('exportMenu')"><i class="ph ph-upload-simple"></i> <span data-i18n="export">Export</span></button>
           <div class="dropdown-menu" id="exportMenu">
-            <button onclick="exportData('json')"><i class="ph ph-file-text"></i> JSON</button>
-            <button onclick="exportData('md')"><i class="ph ph-file-text"></i> Markdown</button>
-            <button onclick="exportData('csv')"><i class="ph ph-file-csv"></i> CSV</button>
+            <button onclick="exportData()"><i class="ph ph-file-text"></i> JSON</button>
           </div>
         </div>
         <span class="spacer"></span>
@@ -370,7 +366,7 @@ i[class*="ph"]{display:inline-flex;align-items:center;justify-content:center}
 </div>
 
 <div class="toast" id="toast"></div>
-<input type="file" id="importFileInput" style="display:none" accept=".json,.md,.csv" onchange="handleFileImport(event)">
+<input type="file" id="importFileInput" style="display:none" accept=".json" onchange="handleFileImport(event)">
 <input type="file" id="imgFileInput" style="display:none" accept="image/*" onchange="handleImageInsert(event)">
 
 <script>
@@ -407,11 +403,39 @@ let currentPromptId = null;
 let currentLang = 'zh';
 let isDirty = false;
 
-try { const s = localStorage.getItem('pm_v4'); if (s) { const p = JSON.parse(s); if (p.prompts) store = p; } } catch(e) {}
-// migrate old data
-if (!store.aiModels) store.aiModels = ['ChatGPT','Claude','Gemini','DeepSeek','通用','kimi'];
-store.prompts.forEach(p => { if (!p.aiModel) p.aiModel = '通用'; });
-function saveStore() { localStorage.setItem('pm_v4', JSON.stringify(store)); }
+// ---- IndexedDB storage (no quota limit) ----
+const DB_NAME = 'prompt_manager_db', DB_VER = 1;
+let db = null;
+function openDB(){
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open(DB_NAME, DB_VER);
+    req.onupgradeneeded = () => { req.result.createObjectStore('kv'); };
+    req.onsuccess = () => { db = req.result; resolve(db); };
+    req.onerror = () => reject(req.error);
+  });
+}
+function dbGet(key){ return new Promise(r => { if(!db){ r(null); return; } const t=db.transaction('kv').objectStore('kv').get(key); t.onsuccess=()=>r(t.result); t.onerror=()=>r(null); }); }
+function dbSet(key, val){ if(!db) return; db.transaction('kv','readwrite').objectStore('kv').put(val, key); }
+function dbDel(key){ if(!db) return; db.transaction('kv','readwrite').objectStore('kv').delete(key); }
+
+async function saveStore(){
+  try { dbSet('store', store); } catch(e) {}
+}
+async function loadStore(){
+  await openDB();
+  // migrate from old localStorage
+  const old = localStorage.getItem('pm_v4');
+  if (old) { try { const p = JSON.parse(old); if(p.prompts && p.prompts.length > 0) { store = p; localStorage.removeItem('pm_v4'); } } catch(e) {} }
+  const saved = await dbGet('store');
+  if (saved && saved.prompts && saved.prompts.length > 0) store = saved;
+  // migrate var defaults
+  const oldVd = localStorage.getItem('pm_vd_v4');
+  if (oldVd) { try { varDefaults = JSON.parse(oldVd); localStorage.removeItem('pm_vd_v4'); } catch(e) {} }
+  // ensure aiModels exists
+  if (!store.aiModels) store.aiModels = ['ChatGPT','Claude','Gemini','DeepSeek','通用','kimi'];
+  store.prompts.forEach(p => { if (!p.aiModel) p.aiModel = '通用'; });
+  if (saved) saveStore();
+}
 
 // ============================================================
 // I18N
@@ -604,8 +628,10 @@ function handleEditorDrop(e){
   const file = e.dataTransfer?.files?.[0];
   if (file) handleImageFile(file);
 }
-function getVarDefaults(){ try{ return JSON.parse(localStorage.getItem('pm_vd_v4')||'{}'); }catch(e){ return{}; } }
-function setVarDefaults(o){ localStorage.setItem('pm_vd_v4',JSON.stringify(o)); }
+let varDefaults = {};
+async function loadVarDefaults(){ const v = await dbGet('varDefaults'); if(v) varDefaults = v; }
+function getVarDefaults(){ return varDefaults; }
+function setVarDefaults(o){ varDefaults = o; dbSet('varDefaults', o); }
 function onVarChange(){ const d={}; document.getElementById('variableBar').querySelectorAll('input[data-var]').forEach(i=>{if(i.value)d[i.getAttribute('data-var')]=i.value;}); setVarDefaults(d); }
 function updateCategorySelect(){ document.getElementById('editorCategory').innerHTML=store.categories.filter(c=>c.id!==1).map(c=>`<option value="${c.id}">${catName(c)}</option>`).join(''); }
 function updateAiModelSelect(){ document.getElementById('editorAiModel').innerHTML=store.aiModels.map(m=>`<option value="${m}">${m}</option>`).join(''); }
@@ -781,25 +807,27 @@ function quickSelect(id){
 function toggleDropdown(id){ const m=document.getElementById(id),o=m.classList.contains('show'); document.querySelectorAll('.dropdown-menu').forEach(x=>x.classList.remove('show')); if(!o)m.classList.add('show'); }
 document.addEventListener('click',e=>{ if(!e.target.closest('.dropdown')) document.querySelectorAll('.dropdown-menu').forEach(m=>m.classList.remove('show')); });
 
-function importData(fmt){ document.getElementById('importMenu').classList.remove('show'); document.getElementById('importFileInput').setAttribute('data-format',fmt); document.getElementById('importFileInput').click(); }
+function importData(){ document.getElementById('importMenu').classList.remove('show'); document.getElementById('importFileInput').click(); }
 function handleFileImport(e){
-  const f=e.target.files[0]; if(!f) return; const fmt=e.target.getAttribute('data-format')||'json'; const r=new FileReader();
+  const f=e.target.files[0]; if(!f) return; const r=new FileReader();
   r.onload=function(ev){
     try{
-      if(fmt==='json'){ const d=JSON.parse(ev.target.result); if(d.prompts) d.prompts.forEach(p=>{p.id=store.nextId++; if(!p.aiModel) p.aiModel='通用'; if(!store.prompts.find(sp=>sp.title===p.title)) store.prompts.push(p);}); if(d.aiModels) d.aiModels.forEach(m=>{if(!store.aiModels.includes(m)) store.aiModels.push(m);}); }
-      else if(fmt==='md'){ ev.target.result.split(/^## /gm).filter(b=>b.trim()).forEach(b=>{const ls=b.trim().split('\n'),t=ls[0].trim(),c=ls.slice(1).join('\n').trim(); if(t&&c) store.prompts.push({id:store.nextId++,title:t,content:c,categoryId:2,tags:[],fav:false,createdAt:new Date().toISOString().slice(0,10),updatedAt:new Date().toISOString().slice(0,10)});}); }
-      else if(fmt==='csv'){ ev.target.result.split('\n').slice(1).forEach(row=>{const cs=row.split(','); if(cs[0]&&cs[1]) store.prompts.push({id:store.nextId++,title:cs[0].trim(),content:cs[1].trim(),categoryId:2,tags:(cs[2]||'').split(';').map(t=>t.trim()).filter(Boolean),fav:false,createdAt:new Date().toISOString().slice(0,10),updatedAt:new Date().toISOString().slice(0,10)});}); }
+      let text = ev.target.result;
+      if(text.charCodeAt(0)===0xFEFF) text=text.slice(1);
+      const d=JSON.parse(text);
+      if(d.prompts) d.prompts.forEach(p=>{p.id=store.nextId++; if(!p.aiModel) p.aiModel='通用'; if(!store.prompts.find(sp=>sp.title===p.title)) store.prompts.push(p);});
+      if(d.categories){ let cid=Math.max(...store.categories.map(x=>x.id),1); d.categories.forEach(c=>{if(!store.categories.find(sc=>sc.name===c.name)){c.id=++cid; store.categories.push(c);}}); }
+      if(d.aiModels) d.aiModels.forEach(m=>{if(!store.aiModels.includes(m)) store.aiModels.push(m);});
       saveStore(); showToast(t('imported')); renderAll();
-    }catch(err){ showToast('Import failed'); }
+    }catch(err){ showToast('Import failed: '+err.message); }
   }; r.readAsText(f); e.target.value='';
 }
-function exportData(fmt){
-  document.getElementById('exportMenu').classList.remove('show'); const ps=getFilteredPrompts(); let c,fn,m;
-  if(fmt==='json'){ c=JSON.stringify({prompts:ps,categories:store.categories,tags:store.tags,aiModels:store.aiModels},null,2); fn='prompts.json'; m='application/json'; }
-  else if(fmt==='md'){ c=ps.map(p=>`## ${p.title}\n> ${catName(store.categories.find(c=>c.id===p.categoryId))} | ${p.tags.join(', ')}\n\n${p.content}\n`).join('\n---\n\n'); fn='prompts.md'; m='text/markdown'; }
-  else{ c='Title,Content,Tags\n'+ps.map(p=>`"${p.title.replace(/"/g,'""')}","${p.content.replace(/"/g,'""')}","${p.tags.join(';')}"`).join('\n'); fn='prompts.csv'; m='text/csv'; }
-  const b=new Blob(['\uFEFF'+c],{type:m+';charset=utf-8'}); const a=document.createElement('a'); a.href=URL.createObjectURL(b); a.download=fn; a.click(); URL.revokeObjectURL(a.href);
-  showToast(t('exported_to')+' Downloads/'+fn);
+function exportData(){
+  document.getElementById('exportMenu').classList.remove('show'); const ps=getFilteredPrompts();
+  const c=JSON.stringify({prompts:ps,categories:store.categories,tags:store.tags,aiModels:store.aiModels},null,2);
+  const b=new Blob([c],{type:'application/json;charset=utf-8'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(b); a.download='prompts.json'; a.click(); URL.revokeObjectURL(a.href);
+  showToast(t('exported_to')+' Downloads/prompts.json');
 }
 
 // ============================================================
@@ -834,7 +862,9 @@ function escapeAttr(s){ return s.replace(/&/g,'&amp;').replace(/"/g,'&quot;').re
 // ============================================================
 // INIT
 // ============================================================
-function init(){
+async function init(){
+  await loadStore();
+  await loadVarDefaults();
   document.getElementById('settingLang').value='zh';
   document.getElementById('settingThemeToggle').classList.toggle('on',false);
   renderAll();
