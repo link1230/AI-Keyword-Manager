@@ -1,16 +1,15 @@
 <p align="center">
-  <a href="#english"><img src="https://img.shields.io/badge/lang-English-blue" alt="English"></a>
-  <a href="#chinese"><img src="https://img.shields.io/badge/lang-中文-red" alt="中文"></a>
-  <br>
   <img src="https://img.shields.io/badge/platform-Windows-blue?logo=windows">
   <img src="https://img.shields.io/badge/built%20with-Tauri-FFC131?logo=tauri">
   <img src="https://img.shields.io/badge/size-2.5MB-green">
   <img src="https://img.shields.io/badge/license-MIT-lightgrey">
 </p>
 
----
+# PromptManager
 
-<h1 id="english">🇬🇧 PromptManager</h1>
+<details id="english" open>
+<summary><b>🇬🇧 English</b> (click for 中文)</summary>
+<br>
 
 > AI Prompt Manager — a native Windows desktop app to organize, search, and reuse your AI prompt templates.
 
@@ -56,22 +55,11 @@ npx tauri build
 
 Output: `src-tauri/target/release/bundle/`
 
-## 🛠 Tech Stack
+</details>
 
-| Layer | Choice |
-|-------|--------|
-| Desktop shell | [Tauri v2](https://tauri.app) (Rust) |
-| UI | Vanilla HTML/CSS/JS |
-| Icons | [Phosphor Icons](https://phosphoricons.com) |
-| Fonts | Geist Sans + Newsreader |
-
-## 📄 License
-
-MIT
-
----
-
-<h1 id="chinese">🇨🇳 PromptManager / 提示词管理器</h1>
+<details id="chinese">
+<summary><b>🇨🇳 中文</b>（点击切换 English）</summary>
+<br>
 
 > AI 提示词管理器 — Windows 原生桌面应用，帮你组织、搜索、复用 AI 提示词模板。
 
@@ -117,15 +105,19 @@ npx tauri build
 
 构建产物：`src-tauri/target/release/bundle/`
 
-## 🛠 技术栈
+</details>
 
-| 层 | 选型 |
-|----|------|
-| 桌面壳 | [Tauri v2](https://tauri.app)（Rust） |
-| 界面 | 原生 HTML/CSS/JS |
-| 图标 | [Phosphor Icons](https://phosphoricons.com) |
-| 字体 | Geist Sans + Newsreader |
+---
 
-## 📄 许可证
+## 🛠 Tech Stack / 技术栈
+
+| 层 Layer | 选型 Choice |
+|-----------|-------------|
+| Desktop shell | [Tauri v2](https://tauri.app) (Rust) |
+| UI | Vanilla HTML / CSS / JS |
+| Icons | [Phosphor Icons](https://phosphoricons.com) |
+| Fonts | Geist Sans + Newsreader |
+
+## 📄 License
 
 MIT
