@@ -5,63 +5,13 @@
   <img src="https://img.shields.io/badge/license-MIT-lightgrey">
 </p>
 
-# PromptManager
-
-<details id="english" open>
-<summary><b>🇬🇧 English</b> (click for 中文)</summary>
-<br>
-
-> AI Prompt Manager — a native Windows desktop app to organize, search, and reuse your AI prompt templates.
-
-## ✨ Features
-
-- **Category tree** — organize prompts into nested categories
-- **Tag + AI Model filter** — double filter: content tags × AI platform (ChatGPT / Claude / Gemini / DeepSeek / Kimi…)
-- **Quick search** — `Ctrl+K` or `Ctrl+Shift+P` global fuzzy search with keyboard navigation
-- **Variable placeholders** — `{language}` `{style}` `{topic}` — auto-detected, one-click fill before copy
-- **Image support** — paste / drag-drop / insert images into prompts (base64)
-- **Bilingual UI** — full Chinese-English switch, categories + menus translated
-- **Dark / Light theme** — warm editorial monochrome palette + film grain texture
-- **Import / Export** — JSON (full data), Markdown, CSV
-- **Local-first** — data in localStorage, zero cloud dependency
-
-## 📦 Installation
-
-Download `PromptManager_Setup.exe` (~2.5 MB) from the [latest Release](https://github.com/你的用户名/prompt-manager/releases/latest), double-click to install.
-
-> Windows 10/11 ships with WebView2 runtime — no extra dependencies needed.
-
-## 🚀 Usage
-
-Double-click the desktop shortcut. The window opens ready to use.
-
-| Action | Shortcut |
-|--------|----------|
-| Quick search | `Ctrl` + `K` |
-| Save | `Ctrl` + `S` |
-| New prompt | `Ctrl` + `N` |
-| Close modal | `Esc` |
-
-**Variables**: write `{variable_name}` anywhere in prompt content (Chinese supported). The variable bar auto-appears — preset defaults and copy with one click.
-
-## 🔨 Build from Source
-
-```bash
-git clone https://github.com/你的用户名/prompt-manager.git
-cd prompt-manager
-npm install
-npx tauri build
-```
-
-Output: `src-tauri/target/release/bundle/`
-
-</details>
-
-<details id="chinese">
-<summary><b>🇨🇳 中文</b>（点击切换 English）</summary>
-<br>
+# PromptManager / 提示词管理器
 
 > AI 提示词管理器 — Windows 原生桌面应用，帮你组织、搜索、复用 AI 提示词模板。
+
+<p align="center">
+    简体中文 | <a href="./docs/README.en.md">English</a>
+</p>
 
 ## ✨ 功能
 
@@ -70,7 +20,7 @@ Output: `src-tauri/target/release/bundle/`
 - **快速搜索** — `Ctrl+K` 或 `Ctrl+Shift+P` 全局模糊搜索，键盘导航
 - **变量占位符** — `{语言}` `{风格}` `{主题}` — 自动识别，复制前一键填充
 - **图片支持** — 粘贴 / 拖拽 / 插入图片到提示词（base64）
-- **中英双语** — 全界面切换，分类菜单同步翻译
+- **中英双语界面** — 全界面切换，分类菜单同步翻译
 - **深色/浅色主题** — 暖色调 editorial 配色 + 胶片颗粒纹理
 - **导入/导出** — JSON（完整数据）、Markdown、CSV
 - **纯本地** — 数据存浏览器 localStorage，无需任何云服务
@@ -105,19 +55,15 @@ npx tauri build
 
 构建产物：`src-tauri/target/release/bundle/`
 
-</details>
+## 🛠 技术栈
 
----
+| 层 | 选型 |
+|----|------|
+| 桌面壳 | [Tauri v2](https://tauri.app)（Rust） |
+| 界面 | 原生 HTML / CSS / JS |
+| 图标 | [Phosphor Icons](https://phosphoricons.com) |
+| 字体 | Geist Sans + Newsreader |
 
-## 🛠 Tech Stack / 技术栈
-
-| 层 Layer | 选型 Choice |
-|-----------|-------------|
-| Desktop shell | [Tauri v2](https://tauri.app) (Rust) |
-| UI | Vanilla HTML / CSS / JS |
-| Icons | [Phosphor Icons](https://phosphoricons.com) |
-| Fonts | Geist Sans + Newsreader |
-
-## 📄 License
+## 📄 许可证
 
 MIT
