@@ -718,7 +718,9 @@ function newPrompt(){
   openEditModal(p.id);
 }
 
+let _saving = false;
 function savePrompt(){
+  _saving = true;
   const p=store.prompts.find(p=>p.id===currentPromptId); if(!p) return;
   const body=document.getElementById('editorBody');
   p.title=document.getElementById('editorTitle').value||'Untitled';
@@ -729,10 +731,10 @@ function savePrompt(){
   store.prompts.forEach(pp=>pp.tags.forEach(t=>{if(!store.tags.includes(t))store.tags.push(t);}));
   saveStore(); isDirty=false;
   document.getElementById('saveHint').textContent=t('saved');
-  setTimeout(()=>{document.getElementById('saveHint').textContent='';},2000);
   renderBentoGrid(); renderCategoryTree(); renderTagCloud(); renderAiModelCloud(); updatePromptCount();
+  setTimeout(()=>{ _saving=false; if(!isDirty) document.getElementById('saveHint').textContent=''; },2000);
 }
-function onEditorChange(){ isDirty=true; document.getElementById('saveHint').textContent=t('unsaved'); updateVariableBar(document.getElementById('editorBody').innerText); }
+function onEditorChange(){ if(_saving) return; isDirty=true; document.getElementById('saveHint').textContent=t('unsaved'); updateVariableBar(document.getElementById('editorBody').innerText); }
 
 function deletePrompt(){
   if(!currentPromptId) return;
