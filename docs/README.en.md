@@ -10,6 +10,10 @@
 > AI Prompt Manager — a native Windows desktop app to organize, search, and reuse your AI prompt templates.
 
 <p align="center">
+  <img src="./poster.png" alt="PromptManager" width="800">
+</p>
+
+<p align="center">
     <a href="../README.md">简体中文</a> | English
 </p>
 

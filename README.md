@@ -10,6 +10,10 @@
 > AI 提示词管理器 — Windows 原生桌面应用，帮你组织、搜索、复用 AI 提示词模板。
 
 <p align="center">
+  <img src="./docs/poster.png" alt="PromptManager" width="800">
+</p>
+
+<p align="center">
     简体中文 | <a href="./docs/README.en.md">English</a>
 </p>
 
