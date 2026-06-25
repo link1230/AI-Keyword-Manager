@@ -1,0 +1,32 @@
+{
+  "productName": "PromptManager",
+  "version": "0.1.0",
+  "identifier": "com.promptmanager.app",
+  "build": {
+    "frontendDist": "../preview",
+    "devUrl": "http://localhost:18990",
+    "beforeDevCommand": "",
+    "beforeBuildCommand": ""
+  },
+  "app": {
+    "windows": [
+      {
+        "title": "PromptManager",
+        "width": 1280,
+        "height": 820,
+        "minWidth": 900,
+        "minHeight": 600
+      }
+    ],
+    "security": {
+      "csp": null
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "icon": [
+      "icons/icon.ico"
+    ]
+  }
+}

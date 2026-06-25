@@ -1,0 +1,839 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PromptManager</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/phosphor-icons@1.4.2/src/css/icons.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&display=swap" rel="stylesheet">
+<style>
+/* ========== VARIABLES ========== */
+:root {
+  --sans:'SF Pro Display','Geist Sans','Switzer','PingFang SC','Microsoft YaHei',sans-serif;
+  --serif:'Newsreader','Lyon Text','Instrument Serif','Noto Serif SC',serif;
+  --mono:'Geist Mono','SF Mono','JetBrains Mono','Consolas',monospace;
+  --ease:cubic-bezier(0.32,0.72,0,1);
+}
+:root,[data-theme="light"] {
+  --canvas:#F5F2EB;--surface:#FBF9F5;--surface-alt:#F0EDE5;
+  --border:rgba(0,0,0,0.07);--border-strong:rgba(0,0,0,0.10);--hairline:rgba(0,0,0,0.04);
+  --text-primary:#1E1D1B;--text-secondary:#5C5A56;--text-muted:#9E9B94;
+  --accent:#3D5A3C;--accent-soft:#6B8F6A;--accent-bg:rgba(61,90,60,0.06);
+  --pastel-sage:rgba(61,90,60,0.08);--pastel-warm:rgba(180,150,120,0.10);
+  --bezel-outer:rgba(0,0,0,0.03);--bezel-inner:#FFFFFF;
+  --shadow-card:0 1px 2px rgba(0,0,0,0.03),0 2px 6px rgba(0,0,0,0.04);
+  --shadow-float:0 4px 20px rgba(0,0,0,0.06),0 1px 2px rgba(0,0,0,0.04);
+}
+[data-theme="dark"] {
+  --canvas:#0D0D0F;--surface:#161618;--surface-alt:#1C1C1F;
+  --border:rgba(255,255,255,0.06);--border-strong:rgba(255,255,255,0.10);--hairline:rgba(255,255,255,0.03);
+  --text-primary:#E8E6E1;--text-secondary:#9E9C96;--text-muted:#5E5C58;
+  --accent:#8CB88A;--accent-soft:#6B9F69;--accent-bg:rgba(140,184,138,0.08);
+  --pastel-sage:rgba(140,184,138,0.08);--pastel-warm:rgba(200,170,140,0.08);
+  --bezel-outer:rgba(255,255,255,0.02);--bezel-inner:#1E1E21;
+  --shadow-card:0 1px 2px rgba(0,0,0,0.15);
+  --shadow-float:0 4px 24px rgba(0,0,0,0.25);
+}
+
+/* ========== RESET ========== */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden}
+body{font-family:var(--sans);font-size:13.5px;line-height:1.6;color:var(--text-primary);background:var(--canvas);display:flex;-webkit-font-smoothing:antialiased}
+body::after{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");background-repeat:repeat;background-size:256px 256px;pointer-events:none;z-index:9999;opacity:0.6}
+::-webkit-scrollbar{width:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border-strong);border-radius:2px}
+i[class*="ph"]{display:inline-flex;align-items:center;justify-content:center}
+
+/* ========== DOUBLE-BEZEL ========== */
+.double-bezel{position:relative;background:var(--bezel-outer);border-radius:20px;padding:5px;border:1px solid var(--hairline);overflow:hidden}
+.double-bezel::before{content:'';position:absolute;inset:5px;border-radius:15px;background:var(--bezel-inner);border:1px solid var(--border);pointer-events:none;z-index:0}
+.double-bezel>*{position:relative;z-index:1}
+
+/* ========== SIDEBAR ========== */
+.sidebar{width:280px;min-width:280px;display:flex;flex-direction:column;padding:16px;gap:14px;user-select:none}
+.sidebar-inner{flex:1;display:flex;flex-direction:column;background:var(--bezel-inner);border-radius:15px;border:1px solid var(--border);overflow:hidden}
+.sidebar-brand{padding:22px 20px 16px;border-bottom:1px solid var(--hairline)}
+.sidebar-brand .logo{font-family:var(--serif);font-size:21px;font-style:italic;font-weight:500;color:var(--text-primary);letter-spacing:-0.4px}
+.sidebar-brand .logo span{font-weight:400;color:var(--text-muted)}
+.sidebar-search{padding:14px 18px;border-bottom:1px solid var(--hairline)}
+.sidebar-search .search-wrap{display:flex;align-items:center;gap:8px;padding:8px 14px;border-radius:10px;background:var(--surface-alt);border:1px solid var(--hairline);transition:border-color .3s var(--ease)}
+.sidebar-search .search-wrap:focus-within{border-color:var(--accent-soft);background:var(--surface)}
+.sidebar-search input{flex:1;border:none;background:transparent;color:var(--text-primary);font-size:13px;font-family:var(--sans);outline:none}
+.sidebar-search input::placeholder{color:var(--text-muted);font-style:italic}
+.sidebar-search .search-wrap i[class*="ph"]{color:var(--text-muted);font-size:16px}
+.sidebar-tree{flex:1;overflow-y:auto;padding:8px 0}
+.tree-item{display:flex;align-items:center;padding:7px 18px;cursor:pointer;gap:8px;color:var(--text-secondary);transition:all .25s var(--ease);font-size:13px}
+.tree-item:hover{background:var(--accent-bg);color:var(--text-primary)}
+.tree-item.active{background:var(--pastel-sage);color:var(--accent);font-weight:500}
+.tree-item .arrow{width:16px;display:flex;align-items:center;justify-content:center;color:var(--text-muted);transition:transform .25s var(--ease);font-size:11px}
+.tree-item .arrow.expanded{transform:rotate(90deg)}
+.tree-item .icon{font-size:15px;width:20px;color:var(--text-muted)}
+.tree-item.active .icon{color:var(--accent)}
+.tree-item .label{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tree-item .count{font-size:10px;color:var(--text-muted);font-family:var(--mono);letter-spacing:0.4px}
+.tree-children{overflow:hidden;transition:max-height .35s var(--ease)}
+.tree-children.collapsed{max-height:0!important}
+.tree-children .tree-item{padding-left:44px}
+.sidebar-tags{padding:12px 16px;border-top:1px solid var(--hairline);display:flex;gap:6px;flex-wrap:wrap;max-height:110px;overflow-y:auto}
+.tag-chip{font-size:10px;padding:4px 11px;border-radius:20px;background:var(--surface-alt);color:var(--text-secondary);cursor:pointer;transition:all .3s var(--ease);border:1px solid var(--hairline);text-transform:uppercase;letter-spacing:0.5px;font-weight:500}
+.tag-chip:hover{border-color:var(--accent-soft);color:var(--accent);background:var(--accent-bg)}
+.tag-chip.active{background:var(--accent);border-color:var(--accent);color:#FFF}
+.sidebar-footer{padding:10px 14px;border-top:1px solid var(--hairline);display:flex;gap:6px}
+
+/* ========== MAIN ========== */
+.main{flex:1;display:flex;flex-direction:column;padding:16px 16px 16px 0;min-width:0;min-height:0}
+.main-inner{flex:1;display:flex;flex-direction:column;background:var(--bezel-inner);border-radius:15px;border:1px solid var(--border);overflow:hidden;min-height:0}
+.toolbar{display:flex;align-items:center;gap:8px;padding:16px 24px;border-bottom:1px solid var(--hairline)}
+.toolbar .spacer{flex:1}
+
+/* ========== BUTTONS ========== */
+.btn{padding:8px 18px;border-radius:100px;border:1px solid var(--border);background:var(--surface);color:var(--text-primary);cursor:pointer;font-size:13px;font-family:var(--sans);font-weight:500;transition:all .35s var(--ease);display:inline-flex;align-items:center;gap:7px;white-space:nowrap;letter-spacing:-0.1px}
+.btn:hover{background:var(--surface-alt);transform:translateY(-1px);box-shadow:var(--shadow-card)}
+.btn:active{transform:scale(.97)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#FFF;padding:8px 8px 8px 20px}
+.btn.primary:hover{background:var(--accent-soft);border-color:var(--accent-soft);box-shadow:0 2px 12px rgba(61,90,60,0.2)}
+.btn.primary .btn-icon-ring{width:28px;height:28px;border-radius:50%;background:rgba(255,255,255,0.18);display:flex;align-items:center;justify-content:center;transition:transform .35s var(--ease)}
+.btn.primary:hover .btn-icon-ring{transform:translateX(3px)}
+.btn.icon-only{width:36px;height:36px;padding:0;justify-content:center;border-radius:50%}
+.btn-sm{padding:5px 12px;font-size:12px}
+.dropdown{position:relative}
+.dropdown-menu{position:absolute;top:calc(100% + 6px);right:0;background:var(--surface);border:1px solid var(--border);border-radius:12px;min-width:150px;box-shadow:var(--shadow-float);z-index:100;display:none;overflow:hidden}
+.dropdown-menu.show{display:block}
+.dropdown-menu button{display:block;width:100%;padding:9px 16px;text-align:left;background:none;border:none;border-bottom:1px solid var(--hairline);color:var(--text-primary);cursor:pointer;font-size:13px;font-family:var(--sans);transition:background .2s}
+.dropdown-menu button:last-child{border-bottom:none}
+.dropdown-menu button:hover{background:var(--accent-bg)}
+
+/* ========== BENTO GRID ========== */
+.prompt-grid-wrap{flex:1;overflow-y:auto;padding:20px 24px;min-height:0}
+.prompt-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:14px}
+.prompt-card{position:relative;background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:18px 20px;cursor:pointer;transition:all .4s var(--ease);display:flex;flex-direction:column;gap:10px;min-height:130px;opacity:0;transform:translateY(16px)}
+.prompt-card.visible{opacity:1;transform:translateY(0)}
+.prompt-card:hover{box-shadow:var(--shadow-float);border-color:var(--accent-soft);transform:translateY(-3px)}
+.prompt-card.selected{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-bg)}
+.prompt-card.span-2{grid-column:span 2}
+.prompt-card.span-3{grid-column:span 3}
+.prompt-card .card-meta{display:flex;align-items:center;gap:8px}
+.prompt-card .card-cat{font-size:11px;text-transform:uppercase;letter-spacing:0.6px;color:var(--accent);font-weight:600}
+.prompt-card .card-ai{font-size:10px;padding:2px 8px;border-radius:6px;background:var(--pastel-blue);color:var(--text-secondary);font-weight:500;margin-left:auto}
+.prompt-card .card-fav{margin-left:auto;color:var(--accent);font-size:14px}
+.prompt-card .card-title{font-family:var(--serif);font-size:18px;font-weight:500;line-height:1.3;color:var(--text-primary);letter-spacing:-0.2px;flex:1}
+.prompt-card .card-preview{font-family:var(--mono);font-size:12px;line-height:1.55;color:var(--text-muted);overflow:hidden;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical}
+.prompt-card .card-tags{display:flex;gap:5px;flex-wrap:wrap}
+.prompt-card .card-tag{font-size:10px;padding:3px 9px;border-radius:10px;background:var(--surface-alt);color:var(--text-muted);text-transform:uppercase;letter-spacing:0.4px;border:1px solid var(--hairline)}
+.empty-grid{grid-column:1/-1;text-align:center;padding:80px 20px}
+.empty-grid .empty-label{font-family:var(--serif);font-size:18px;font-style:italic;color:var(--text-muted)}
+
+/* ========== MODALS ========== */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.3);display:flex;align-items:flex-start;justify-content:center;padding-top:16vh;z-index:1000;opacity:0;pointer-events:none;transition:opacity .3s var(--ease);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+.modal-overlay.show{opacity:1;pointer-events:auto}
+.modal{background:var(--surface);border:1px solid var(--border);border-radius:18px;width:560px;max-height:62vh;display:flex;flex-direction:column;box-shadow:var(--shadow-float);transform:translateY(16px) scale(.97);opacity:0;transition:transform .45s var(--ease),opacity .45s var(--ease)}
+.modal-overlay.show .modal{transform:translateY(0) scale(1);opacity:1}
+.modal-header{display:flex;align-items:center;gap:10px;padding:16px 20px;border-bottom:1px solid var(--hairline)}
+.modal-header input{flex:1;padding:6px 0;border:none;background:transparent;color:var(--text-primary);font-size:15px;outline:none;font-family:var(--sans)}
+.modal-header input::placeholder{color:var(--text-muted)}
+.modal-body{flex:1;overflow-y:auto}
+.modal-item{display:flex;align-items:center;gap:10px;padding:10px 20px;cursor:pointer;transition:background .2s var(--ease);border-bottom:1px solid var(--hairline)}
+.modal-item:hover,.modal-item.focused{background:var(--accent-bg)}
+.modal-item .q-title{flex:1;font-weight:500;font-size:14px}
+.modal-item .q-cat{font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px}
+.modal-item .q-idx{font-size:10px;color:var(--text-muted);font-family:var(--mono);background:var(--surface-alt);padding:2px 8px;border-radius:6px}
+.modal-footer{padding:10px 20px;border-top:1px solid var(--hairline);font-size:11px;color:var(--text-muted);display:flex;gap:16px}
+.modal-footer kbd{background:var(--surface-alt);padding:2px 6px;border-radius:4px;border:1px solid var(--hairline);font-family:var(--mono);font-size:10px}
+
+/* Edit Modal specifics */
+#editModal .modal{width:680px;max-height:80vh}
+#editModal .modal-body{padding:20px 24px;display:flex;flex-direction:column;gap:14px;overflow-y:auto}
+.edit-modal-title{padding:6px 0;border:none;border-bottom:2px solid var(--border);background:transparent;color:var(--text-primary);font-size:18px;font-weight:500;font-family:var(--serif);font-style:italic;outline:none;transition:border-color .3s var(--ease);width:100%}
+.edit-modal-title:focus{border-bottom-color:var(--accent)}
+.edit-modal-title::placeholder{color:var(--text-muted);font-style:italic}
+.edit-modal-body{min-height:160px;padding:12px 0;font-family:var(--mono);font-size:14px;line-height:1.75;color:var(--text-primary);outline:none;white-space:pre-wrap;word-break:break-word}
+.edit-modal-body:empty::before{content:attr(data-placeholder);color:var(--text-muted);font-style:italic}
+.edit-modal-body .var{background:var(--pastel-sage);color:var(--accent);border-radius:3px;padding:0 3px;font-weight:500;font-family:var(--mono)}
+.edit-modal-body img{max-width:100%;max-height:300px;border-radius:8px;border:1px solid var(--border);display:block;margin:8px 0;object-fit:contain;background:var(--surface-alt)}
+.edit-modal-body img:hover{outline:2px solid var(--accent-soft);outline-offset:2px}
+.edit-modal-meta{display:flex;align-items:center;gap:8px}
+.edit-modal-meta select{padding:6px 10px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--text-primary);font-size:12px;outline:none;font-family:var(--sans)}
+.edit-modal-actions{display:flex;align-items:center;gap:8px;padding-top:4px}
+.edit-modal-actions .save-hint{font-size:10px;color:var(--text-muted);font-family:var(--mono);letter-spacing:0.3px}
+
+/* Var bar */
+.variable-bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.variable-bar .vb-label{font-size:9px;text-transform:uppercase;letter-spacing:0.7px;color:var(--text-muted);font-weight:600}
+.variable-bar input{width:100px;padding:4px 10px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--text-primary);font-size:12px;outline:none;font-family:var(--mono);transition:border-color .3s var(--ease)}
+.variable-bar input:focus{border-color:var(--accent)}
+
+/* Meta buttons */
+.meta-btn{padding:6px 8px;border:1px solid var(--border);border-radius:8px;background:var(--surface);cursor:pointer;color:var(--text-muted);transition:all .3s var(--ease);font-size:14px;display:flex;align-items:center}
+.meta-btn:hover{color:var(--text-primary);border-color:var(--text-secondary)}
+.meta-btn.active{color:var(--accent);border-color:var(--accent)}
+
+/* Var fill modal */
+#varFillOverlay .modal{width:400px}
+#varFillOverlay .modal-body{padding:16px 20px;display:flex;flex-direction:column;gap:10px}
+.var-fill-row{display:flex;align-items:center;gap:10px}
+.var-fill-row .vf-name{width:90px;font-family:var(--mono);font-size:12px;color:var(--accent);background:var(--pastel-sage);padding:4px 8px;border-radius:6px;text-align:center}
+.var-fill-row input{flex:1;padding:7px 10px;border-radius:8px;border:1px solid var(--border);background:var(--surface-alt);color:var(--text-primary);font-size:13px;outline:none;font-family:var(--sans);transition:border-color .3s var(--ease)}
+.var-fill-row input:focus{border-color:var(--accent)}
+
+/* Settings */
+#settingsOverlay .modal{width:380px}
+.settings-row{display:flex;align-items:center;gap:10px;padding:12px 0;border-bottom:1px solid var(--hairline);font-size:13px}
+.settings-row:last-child{border-bottom:none}
+.settings-row .spacer{flex:1}
+.settings-row select{padding:5px 10px;border-radius:8px;border:1px solid var(--border);background:var(--surface-alt);color:var(--text-primary);font-size:12px;outline:none;font-family:var(--sans)}
+.toggle-switch{width:34px;height:20px;border-radius:10px;background:var(--border-strong);cursor:pointer;transition:background .3s var(--ease);position:relative}
+.toggle-switch.on{background:var(--accent)}
+.toggle-switch::after{content:'';position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:#FFF;transition:left .3s var(--ease);box-shadow:0 1px 3px rgba(0,0,0,0.15)}
+.toggle-switch.on::after{left:16px}
+
+/* Toast */
+.toast{position:fixed;bottom:40px;left:50%;transform:translateX(-50%);padding:9px 22px;border-radius:100px;background:var(--text-primary);color:var(--canvas);font-size:12px;font-weight:500;z-index:2000;pointer-events:none;opacity:0;transition:opacity .35s var(--ease),transform .35s var(--ease);font-family:var(--sans);letter-spacing:-0.1px}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(-8px)}
+
+@media(max-width:768px){body{flex-direction:column}.sidebar{width:100%;min-width:0;max-height:40vh}.main{padding:0}.prompt-grid{grid-template-columns:repeat(2,1fr);gap:10px}.prompt-card.span-2,.prompt-card.span-3{grid-column:span 2}}
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="double-bezel" style="flex:1;display:flex;flex-direction:column;">
+    <div class="sidebar-inner">
+      <div class="sidebar-brand"><span class="logo">Prompt<span>Manager</span></span></div>
+      <div class="sidebar-search">
+        <div class="search-wrap">
+          <i class="ph ph-magnifying-glass"></i>
+          <input type="text" id="sidebarSearch" placeholder="Search prompts..." oninput="filterAndRender()">
+        </div>
+      </div>
+      <nav class="sidebar-tree" id="categoryTree"></nav>
+      <div class="sidebar-tags" id="tagCloud"></div>
+      <div class="sidebar-tags" id="aiModelCloud" style="border-top:1px solid var(--hairline)"></div>
+      <div class="sidebar-footer">
+        <button class="btn icon-only" onclick="toggleTheme()" title="Toggle theme"><i class="ph ph-sun" id="themeIcon"></i></button>
+        <button class="btn icon-only" onclick="toggleLang()" title="Toggle language"><i class="ph ph-globe"></i></button>
+        <button class="btn" onclick="openSettings()" style="margin-left:auto"><i class="ph ph-gear"></i> <span data-i18n="settings">Settings</span></button>
+      </div>
+    </div>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<main class="main">
+  <div class="double-bezel" style="flex:1;display:flex;flex-direction:column;min-height:0;">
+    <div class="main-inner">
+      <div class="toolbar">
+        <button class="btn primary" onclick="newPrompt()">
+          <span data-i18n="new_prompt">New Prompt</span>
+          <span class="btn-icon-ring"><i class="ph-bold ph-plus"></i></span>
+        </button>
+        <div class="dropdown">
+          <button class="btn" onclick="toggleDropdown('importMenu')"><i class="ph ph-download-simple"></i> <span data-i18n="import">Import</span></button>
+          <div class="dropdown-menu" id="importMenu">
+            <button onclick="importData('json')"><i class="ph ph-file-text"></i> JSON</button>
+            <button onclick="importData('md')"><i class="ph ph-file-text"></i> Markdown</button>
+            <button onclick="importData('csv')"><i class="ph ph-file-csv"></i> CSV</button>
+          </div>
+        </div>
+        <div class="dropdown">
+          <button class="btn" onclick="toggleDropdown('exportMenu')"><i class="ph ph-upload-simple"></i> <span data-i18n="export">Export</span></button>
+          <div class="dropdown-menu" id="exportMenu">
+            <button onclick="exportData('json')"><i class="ph ph-file-text"></i> JSON</button>
+            <button onclick="exportData('md')"><i class="ph ph-file-text"></i> Markdown</button>
+            <button onclick="exportData('csv')"><i class="ph ph-file-csv"></i> CSV</button>
+          </div>
+        </div>
+        <span class="spacer"></span>
+        <button class="btn" onclick="openQuickSearch()" title="Ctrl+Shift+P"><i class="ph ph-magnifying-glass"></i> <span data-i18n="qs_search">Search</span></button>
+        <span style="font-size:11px;color:var(--text-muted);font-family:var(--mono)" id="promptCountLabel"></span>
+      </div>
+      <div class="prompt-grid-wrap" id="promptGridWrap">
+        <div class="prompt-grid" id="promptGrid"></div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- QUICK SEARCH MODAL -->
+<div class="modal-overlay" id="quickSearchOverlay">
+  <div class="modal">
+    <div class="modal-header">
+      <i class="ph ph-magnifying-glass" style="color:var(--text-muted);font-size:17px"></i>
+      <input type="text" id="quickSearchInput" placeholder="Search prompts..." oninput="quickSearch()" onkeydown="quickSearchNavigate(event)">
+      <span style="font-size:10px;color:var(--text-muted);font-family:var(--mono)">esc</span>
+    </div>
+    <div class="modal-body" id="quickSearchResults"></div>
+    <div class="modal-footer">
+      <span><kbd>&uarr;&darr;</kbd> <span data-i18n="qs_navigate">Navigate</span></span>
+      <span><kbd>Enter</kbd> <span data-i18n="qs_select">Select</span></span>
+      <span><kbd>Ctrl+Shift+P</kbd> <span data-i18n="qs_open">Open</span></span>
+    </div>
+  </div>
+</div>
+
+<!-- EDIT PROMPT MODAL -->
+<div class="modal-overlay" id="editModal">
+  <div class="modal">
+    <div class="modal-header">
+      <span style="font-family:var(--serif);font-size:15px;font-style:italic" data-i18n="edit_prompt">Edit Prompt</span>
+      <span class="spacer"></span>
+      <button class="meta-btn" onclick="toggleFavorite()" id="favBtn"><i class="ph ph-star"></i></button>
+      <button class="meta-btn" onclick="deletePrompt()"><i class="ph ph-trash"></i></button>
+      <button class="meta-btn" onclick="closeEditModal()"><i class="ph-bold ph-x"></i></button>
+    </div>
+    <div class="modal-body" style="padding:20px 24px;display:flex;flex-direction:column;gap:14px;overflow-y:auto">
+      <div class="edit-modal-meta">
+        <input type="text" class="edit-modal-title" id="editorTitle" placeholder="Prompt title..." oninput="onEditorChange()">
+        <select id="editorCategory" onchange="onEditorChange()"></select>
+        <select id="editorAiModel" onchange="onEditorChange()" style="padding:6px 10px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--text-primary);font-size:12px;outline:none;font-family:var(--sans);cursor:pointer"></select>
+        <button class="meta-btn" onclick="document.getElementById('imgFileInput').click()" title="Insert image"><i class="ph ph-image"></i></button>
+        <button class="meta-btn" onclick="openSettings();document.getElementById('newCatInput').focus()" title="Manage categories"><i class="ph-bold ph-plus"></i></button>
+      </div>
+      <div class="edit-modal-body" id="editorBody" contenteditable="true" data-placeholder="Write your prompt template... Use {variable} for placeholders — paste or drop images here" oninput="onEditorChange()" onpaste="handleEditorPaste(event)" ondrop="handleEditorDrop(event)" ondragover="event.preventDefault()"></div>
+      <div class="variable-bar" id="variableBar" style="display:none"></div>
+      <div class="edit-modal-actions">
+        <button class="btn primary" onclick="copyPrompt()">
+          <span data-i18n="copy">Copy to Clipboard</span>
+          <span class="btn-icon-ring"><i class="ph-bold ph-copy"></i></span>
+        </button>
+        <button class="btn" onclick="savePrompt()"><i class="ph ph-floppy-disk"></i> <span data-i18n="save">Save</span></button>
+        <span class="save-hint" id="saveHint"></span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- VAR FILL MODAL -->
+<div class="modal-overlay" id="varFillOverlay">
+  <div class="modal">
+    <div class="modal-header"><span style="font-family:var(--serif);font-size:15px;font-style:italic" data-i18n="fill_variables">Fill Variables</span></div>
+    <div class="modal-body" id="varFillBody"></div>
+    <div style="padding:12px 20px;border-top:1px solid var(--hairline);display:flex;gap:8px;justify-content:flex-end">
+      <button class="btn btn-sm" onclick="closeVarFill()"><i class="ph-bold ph-x"></i> <span data-i18n="cancel">Cancel</span></button>
+      <button class="btn btn-sm primary" onclick="confirmVarFill()"><i class="ph-bold ph-check"></i> <span data-i18n="confirm_copy">Confirm &amp; Copy</span></button>
+    </div>
+  </div>
+</div>
+
+<!-- SETTINGS MODAL -->
+<div class="modal-overlay" id="settingsOverlay">
+  <div class="modal">
+    <div class="modal-header"><span style="font-family:var(--serif);font-size:15px;font-style:italic" data-i18n="settings">Settings</span></div>
+    <div class="modal-body" style="padding:0 20px">
+      <div class="settings-row">
+        <span data-i18n="settings_theme">Theme</span><span class="spacer"></span>
+        <span style="font-size:10px;color:var(--text-muted);margin-right:6px" data-i18n="settings_light">Light</span>
+        <div class="toggle-switch" id="settingThemeToggle" onclick="toggleTheme()"></div>
+        <span style="font-size:10px;color:var(--text-muted);margin-left:6px" data-i18n="settings_dark">Dark</span>
+      </div>
+      <div class="settings-row">
+        <span data-i18n="settings_lang">Language</span><span class="spacer"></span>
+        <select id="settingLang" onchange="setLang(this.value)"><option value="zh">Chinese</option><option value="en">English</option></select>
+      </div>
+      <div class="settings-row">
+        <span data-i18n="settings_hotkey">Hotkey</span><span class="spacer"></span>
+        <kbd style="background:var(--surface-alt);padding:4px 10px;border-radius:6px;border:1px solid var(--hairline);font-family:var(--mono);font-size:11px">Ctrl Shift P</kbd>
+      </div>
+      <div class="settings-row" style="flex-direction:column;align-items:stretch;gap:8px">
+        <span data-i18n="settings_cats">Categories</span>
+        <div id="catManageList" style="display:flex;flex-direction:column;gap:6px"></div>
+        <div style="display:flex;gap:6px">
+          <input type="text" id="newCatInput" placeholder="New category..." style="flex:1;padding:5px 10px;border-radius:8px;border:1px solid var(--border);background:var(--surface-alt);color:var(--text-primary);font-size:12px;outline:none;font-family:var(--sans)" onkeydown="if(event.key==='Enter')addCategory()">
+          <button class="btn btn-sm primary" onclick="addCategory()"><i class="ph-bold ph-plus"></i></button>
+        </div>
+      </div>
+      <div class="settings-row" style="flex-direction:column;align-items:stretch;gap:8px">
+        <span data-i18n="settings_aimodels">AI Models</span>
+        <div id="aiModelManageList" style="display:flex;flex-direction:column;gap:6px"></div>
+        <div style="display:flex;gap:6px">
+          <input type="text" id="newAiModelInput" placeholder="New model..." style="flex:1;padding:5px 10px;border-radius:8px;border:1px solid var(--border);background:var(--surface-alt);color:var(--text-primary);font-size:12px;outline:none;font-family:var(--sans)" onkeydown="if(event.key==='Enter')addAiModel()">
+          <button class="btn btn-sm primary" onclick="addAiModel()"><i class="ph-bold ph-plus"></i></button>
+        </div>
+      </div>
+    </div>
+    <div style="padding:14px 20px;border-top:1px solid var(--hairline);text-align:right">
+      <button class="btn btn-sm primary" onclick="closeSettings()"><i class="ph-bold ph-x"></i> <span data-i18n="close">Close</span></button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<input type="file" id="importFileInput" style="display:none" accept=".json,.md,.csv" onchange="handleFileImport(event)">
+<input type="file" id="imgFileInput" style="display:none" accept="image/*" onchange="handleImageInsert(event)">
+
+<script>
+// ============================================================
+// DATA
+// ============================================================
+const DEFAULT_DATA = {
+  prompts: [
+    { id:1, title:'Code Review Expert', content:'You are a senior {语言} code reviewer...', categoryId:2, tags:['Coding','Review'], aiModel:'通用', fav:true, createdAt:'2025-01-10', updatedAt:'2025-06-15' },
+    { id:2, title:'Copy Polisher', content:'Polish the following copy to be more {风格}...', categoryId:3, tags:['Writing','Copy'], aiModel:'ChatGPT', fav:false, createdAt:'2025-02-20', updatedAt:'2025-06-10' },
+    { id:3, title:'Translator', content:'Translate from {源语言} to {目标语言}...', categoryId:4, tags:['Translation'], aiModel:'通用', fav:true, createdAt:'2025-03-05', updatedAt:'2025-06-01' },
+    { id:4, title:'API Documentation', content:'Generate API docs from {语言} code...', categoryId:2, tags:['Coding','Docs'], aiModel:'Claude', fav:false, createdAt:'2025-03-18', updatedAt:'2025-05-28' },
+    { id:5, title:'Git Commit Message', content:'Generate a standardized Git commit message...', categoryId:2, tags:['Coding','Git'], aiModel:'通用', fav:false, createdAt:'2025-04-02', updatedAt:'2025-06-12' },
+    { id:6, title:'Weekly Report', content:'Generate a professional weekly report...', categoryId:3, tags:['Writing','Productivity'], aiModel:'ChatGPT', fav:false, createdAt:'2025-04-15', updatedAt:'2025-05-20' },
+    { id:7, title:'SQL Optimizer', content:'Analyze the SQL query and suggest optimizations...', categoryId:2, tags:['Coding','Database'], aiModel:'DeepSeek', fav:false, createdAt:'2025-05-01', updatedAt:'2025-06-08' },
+    { id:8, title:'Meeting Notes', content:'Organize the transcript into structured meeting notes...', categoryId:5, tags:['Productivity','Writing'], aiModel:'Gemini', fav:true, createdAt:'2025-05-12', updatedAt:'2025-06-14' },
+    { id:9, title:'Bug Report', content:'Write a detailed bug report...', categoryId:2, tags:['Coding','Docs'], aiModel:'通用', fav:false, createdAt:'2025-05-20', updatedAt:'2025-06-01' },
+    { id:10, title:'Cold Email', content:'Write a personalized cold email...', categoryId:3, tags:['Writing','Email'], aiModel:'ChatGPT', fav:false, createdAt:'2025-06-01', updatedAt:'2025-06-13' },
+  ],
+  categories: [
+    { id:1, name:'All Prompts', icon:'ph-files', parentId:null, expanded:true },
+    { id:2, name:'Development', icon:'ph-code', parentId:null, expanded:true },
+    { id:3, name:'Writing', icon:'ph-pen-nib', parentId:null, expanded:false },
+    { id:4, name:'Translation', icon:'ph-translate', parentId:null, expanded:false },
+    { id:5, name:'Productivity', icon:'ph-lightning', parentId:null, expanded:false },
+  ],
+  tags: ['Coding','Review','Writing','Copy','Translation','Docs','Git','Productivity','Database','Email'],
+  aiModels: ['ChatGPT','Claude','Gemini','DeepSeek','通用','kimi'],
+  nextId: 11
+};
+
+let store = JSON.parse(JSON.stringify(DEFAULT_DATA));
+let currentPromptId = null;
+let currentLang = 'zh';
+let isDirty = false;
+
+try { const s = localStorage.getItem('pm_v4'); if (s) { const p = JSON.parse(s); if (p.prompts) store = p; } } catch(e) {}
+// migrate old data
+if (!store.aiModels) store.aiModels = ['ChatGPT','Claude','Gemini','DeepSeek','通用','kimi'];
+store.prompts.forEach(p => { if (!p.aiModel) p.aiModel = '通用'; });
+function saveStore() { localStorage.setItem('pm_v4', JSON.stringify(store)); }
+
+// ============================================================
+// I18N
+// ============================================================
+const i18n = {
+  en: {
+    search_placeholder:'Search prompts...', no_prompts:'No prompts match',
+    title_placeholder:'Prompt title...', content_placeholder:'Write your prompt template... Use {variable} for placeholders',
+    copy:'Copy to Clipboard', save:'Save', cancel:'Cancel', fill_variables:'Fill Variables',
+    confirm_copy:'Confirm & Copy', close:'Close', settings:'Settings', new_prompt:'New Prompt',
+    import:'Import', export:'Export', all_categories:'All Prompts', favorites:'Favorites',
+    copied:'Copied to clipboard', saved:'Saved', deleted:'Deleted', imported:'Imported successfully',
+    exported:'Exported successfully', unsaved:'Unsaved', edit_prompt:'Edit Prompt',
+    variables_label:'Variables', qs_no_results:'No results', qs_navigate:'Navigate',
+    qs_select:'Select', qs_open:'Open', qs_search:'Search', settings_theme:'Theme', settings_light:'Light',
+    settings_dark:'Dark', settings_lang:'Language', settings_hotkey:'Hotkey',
+    settings_cats:'Categories', cat_delete:'Delete',
+    settings_aimodels:'AI Models',
+    prompt_count:n=>' prompt'+(n!==1?'s':''),
+    cat_Development:'Development', cat_Writing:'Writing', cat_Translation:'Translation', cat_Productivity:'Productivity',
+  },
+  zh: {}
+};
+let i18nLoaded = false;
+
+async function loadZhI18n() {
+  try {
+    const r = await fetch('zh.json');
+    if (r.ok) { i18n.zh = await r.json(); i18nLoaded = true; }
+    else { i18n.zh = {}; }
+  } catch(e) { i18n.zh = {}; }
+  if (document.getElementById('promptGrid').innerHTML) renderAll();
+}
+function t(k,...a){
+  const v=i18n[currentLang]&&i18n[currentLang][k];
+  if(typeof v==='function') return v(...a);
+  if(k==='prompt_count'&&v!==undefined) return a[0]+v;
+  return v!==undefined?v:k;
+}
+function applyI18N(){
+  document.querySelectorAll('[data-i18n]').forEach(el=>{
+    const k=el.getAttribute('data-i18n');
+    for(const c of el.childNodes){ if(c.nodeType===3){ c.textContent=t(k); break; } }
+  });
+  document.getElementById('sidebarSearch').placeholder=t('search_placeholder');
+  document.getElementById('editorTitle').placeholder=t('title_placeholder');
+  document.getElementById('editorBody').setAttribute('data-placeholder',t('content_placeholder'));
+  document.getElementById('quickSearchInput').placeholder=t('search_placeholder');
+  document.documentElement.lang=currentLang;
+}
+function toggleLang(){ currentLang=currentLang==='zh'?'en':'zh'; document.getElementById('settingLang').value=currentLang; applyI18N(); renderAll(); }
+function setLang(l){ if(currentLang!==l) toggleLang(); }
+
+// ============================================================
+// THEME
+// ============================================================
+function toggleTheme(){
+  const h=document.documentElement, n=h.getAttribute('data-theme')==='dark'?'light':'dark';
+  h.setAttribute('data-theme',n);
+  document.getElementById('settingThemeToggle').classList.toggle('on',n==='dark');
+  document.getElementById('themeIcon').className='ph '+(n==='dark'?'ph-moon':'ph-sun');
+}
+function themeIsDark(){ return document.documentElement.getAttribute('data-theme')==='dark'; }
+
+// ============================================================
+// RENDER
+// ============================================================
+function renderAll(){ renderCategoryTree(); renderBentoGrid(); renderTagCloud(); renderAiModelCloud(); updateCategorySelect(); updateAiModelSelect(); updatePromptCount(); applyI18N(); }
+
+function renderCategoryTree(){
+  const el=document.getElementById('categoryTree'), act=getActiveCatId(); let h='';
+  h+=`<div class="tree-item ${act===null?'active':''}" onclick="selectCategory(null)"><span class="icon"><i class="ph ph-files"></i></span><span class="label">${t('all_categories')}</span><span class="count">${store.prompts.length}</span></div>`;
+  const fc=store.prompts.filter(p=>p.fav).length;
+  h+=`<div class="tree-item ${act==='fav'?'active':''}" onclick="selectCategory('fav')"><span class="icon"><i class="ph ph-star"></i></span><span class="label">${t('favorites')}</span><span class="count">${fc}</span></div>`;
+  store.categories.filter(c=>!c.parentId).forEach(cat=>{
+    const ex=cat.expanded!==false, cnt=store.prompts.filter(p=>p.categoryId===cat.id).length;
+    h+=`<div class="tree-item ${act===cat.id?'active':''}" onclick="selectCategory(${cat.id})"><span class="arrow ${ex?'expanded':''}" onclick="event.stopPropagation();toggleCategory(${cat.id})"><i class="ph-bold ph-caret-right"></i></span><span class="icon"><i class="ph ${cat.icon}"></i></span><span class="label">${catName(cat)}</span><span class="count">${cnt}</span></div>`;
+  });
+  el.innerHTML=h;
+}
+function toggleCategory(id){ const c=store.categories.find(c=>c.id===id); if(c){ c.expanded=!c.expanded; saveStore(); renderCategoryTree(); } }
+function getActiveCatId(){ const v=document.querySelector('.main').getAttribute('data-active-cat'); if(v==='fav')return'fav'; if(v===null||v==='null'||v==='')return null; return parseInt(v); }
+function selectCategory(id){ document.querySelector('.main').setAttribute('data-active-cat',id===null?'null':String(id)); closeEditModal(); renderAll(); }
+function catName(cat){ if(!cat) return''; const k='cat_'+cat.name,v=i18n[currentLang]&&i18n[currentLang][k]; return v!==undefined?v:cat.name; }
+
+function renderTagCloud(){
+  const el=document.getElementById('tagCloud'), act=document.querySelector('.main').getAttribute('data-active-tag')||'';
+  const tc={}; store.prompts.forEach(p=>p.tags.forEach(t=>{tc[t]=(tc[t]||0)+1;}));
+  el.innerHTML=Object.entries(tc).sort((a,b)=>b[1]-a[1]).map(([tag])=>`<span class="tag-chip ${act===tag?'active':''}" onclick="filterByTag('${escapeHtml(tag)}',event)">${escapeHtml(tag)}</span>`).join('');
+}
+function filterByTag(tag,e){ e.stopPropagation(); const m=document.querySelector('.main'),cur=m.getAttribute('data-active-tag'); m.setAttribute('data-active-tag',cur===tag?'':tag); renderBentoGrid(); renderTagCloud(); updatePromptCount(); }
+function renderAiModelCloud(){
+  const el=document.getElementById('aiModelCloud'), act=document.querySelector('.main').getAttribute('data-active-ai')||'';
+  const mc={}; store.prompts.forEach(p=>{const m=p.aiModel||'通用'; mc[m]=(mc[m]||0)+1;});
+  el.innerHTML=Object.entries(mc).sort((a,b)=>b[1]-a[1]).map(([m])=>`<span class="tag-chip ${act===m?'active':''}" onclick="filterByAiModel('${escapeHtml(m)}',event)">${escapeHtml(m)}</span>`).join('');
+}
+function filterByAiModel(m,e){ e.stopPropagation(); const el=document.querySelector('.main'),cur=el.getAttribute('data-active-ai'); el.setAttribute('data-active-ai',cur===m?'':m); renderBentoGrid(); renderAiModelCloud(); updatePromptCount(); }
+function filterAndRender(){ renderBentoGrid(); updatePromptCount(); }
+
+function getFilteredPrompts(){
+  const cat=getActiveCatId(),q=(document.getElementById('sidebarSearch').value||'').toLowerCase(),tag=document.querySelector('.main').getAttribute('data-active-tag')||'',ai=document.querySelector('.main').getAttribute('data-active-ai')||'';
+  let ps=[...store.prompts];
+  if(cat==='fav') ps=ps.filter(p=>p.fav); else if(cat!==null) ps=ps.filter(p=>p.categoryId===cat);
+  if(tag) ps=ps.filter(p=>p.tags.includes(tag));
+  if(ai) ps=ps.filter(p=>(p.aiModel||'通用')===ai);
+  if(q) ps=ps.filter(p=>p.title.toLowerCase().includes(q)||p.content.toLowerCase().includes(q)||p.tags.some(t=>t.toLowerCase().includes(q)));
+  ps.sort((a,b)=>b.updatedAt.localeCompare(a.updatedAt)); return ps;
+}
+
+function renderBentoGrid(){
+  const g=document.getElementById('promptGrid'), ps=getFilteredPrompts();
+  if(ps.length===0){ g.innerHTML=`<div class="empty-grid"><div class="empty-label">${t('no_prompts')}</div></div>`; return; }
+  g.innerHTML=ps.map((p,i)=>{
+    const s=i===0?3:(i%3===0?3:2), cat=store.categories.find(c=>c.id===p.categoryId);
+    const prev=p.content.replace(/<[^>]*>/g,'').replace(/\{([^{}]+)\}/g,'[$1]').slice(0,100);
+    return `<div class="prompt-card span-${s} ${currentPromptId===p.id?'selected':''}" data-id="${p.id}" onclick="selectPrompt(${p.id})" style="transition-delay:${i*35}ms">
+      <div class="card-meta"><span class="card-cat">${cat?catName(cat):''}</span><span class="card-ai">${p.aiModel||'通用'}</span>${p.fav?'<span class="card-fav"><i class="ph ph-star-fill"></i></span>':''}</div>
+      <div class="card-title">${escapeHtml(p.title)}</div>
+      <div class="card-preview">${escapeHtml(prev)}</div>
+      <div class="card-tags">${p.tags.map(t=>`<span class="card-tag">${escapeHtml(t)}</span>`).join('')}</div>
+    </div>`;
+  }).join('');
+  requestAnimationFrame(()=>{ g.querySelectorAll('.prompt-card').forEach(c=>c.classList.add('visible')); });
+}
+
+function updatePromptCountLabel(n){ document.getElementById('promptCountLabel').textContent=t('prompt_count',n); }
+function updatePromptCount(){ updatePromptCountLabel(getFilteredPrompts().length); }
+
+// ============================================================
+// EDIT MODAL
+// ============================================================
+function selectPrompt(id){ openEditModal(id); }
+
+function openEditModal(id){
+  currentPromptId=id; isDirty=false;
+  const p=store.prompts.find(p=>p.id===id); if(!p) return;
+  document.getElementById('editorTitle').value=p.title;
+  document.getElementById('editorBody').innerHTML=renderVars(p.content);
+  document.getElementById('editorCategory').value=p.categoryId;
+  document.getElementById('editorAiModel').value=p.aiModel||'通用';
+  document.getElementById('saveHint').textContent='';
+  const fb=document.getElementById('favBtn');
+  if(p.fav){ fb.classList.add('active'); fb.querySelector('i').className='ph ph-star-fill'; }
+  else{ fb.classList.remove('active'); fb.querySelector('i').className='ph ph-star'; }
+  updateVariableBar(p.content); updateCategorySelect();
+  document.getElementById('editModal').classList.add('show');
+  renderBentoGrid();
+  setTimeout(()=>document.getElementById('editorTitle').focus(),100);
+}
+function closeEditModal(){ currentPromptId=null; document.getElementById('editModal').classList.remove('show'); renderBentoGrid(); }
+
+function renderVars(c){ return c.replace(/\{([^{}]+)\}/g,'<span class="var">{$1}</span>'); }
+
+function updateVariableBar(content){
+  const bar=document.getElementById('variableBar'), vars=extractVars(content);
+  if(vars.length===0){ bar.style.display='none'; return; }
+  bar.style.display='flex';
+  const defs=getVarDefaults();
+  bar.innerHTML='<span class="vb-label">'+t('variables_label')+'</span>'+vars.map(v=>`<input type="text" placeholder="${v}" value="${escapeAttr(defs[v]||'')}" data-var="${v}" oninput="onVarChange()">`).join('');
+}
+function extractVars(c){ return[...new Set((c.match(/\{([^{}]+)\}/g)||[]).map(m=>m.slice(1,-1)))]; }
+// ---- Image handling ----
+function insertImageAtCursor(base64){
+  const ed = document.getElementById('editorBody');
+  ed.focus();
+  const img = document.createElement('img');
+  img.src = base64; img.contentEditable = 'false';
+  const sel = window.getSelection();
+  if (sel.rangeCount) { sel.getRangeAt(0).insertNode(img); sel.collapseToEnd(); }
+  else { ed.appendChild(img); }
+  onEditorChange();
+}
+function handleImageFile(file){
+  if (!file || !file.type.startsWith('image/')) return;
+  const reader = new FileReader();
+  reader.onload = function(e){ insertImageAtCursor(e.target.result); };
+  reader.readAsDataURL(file);
+}
+function handleImageInsert(e){ handleImageFile(e.target.files[0]); e.target.value=''; }
+function handleEditorPaste(e){
+  const items = e.clipboardData?.items;
+  if (items) {
+    for (const item of items) {
+      if (item.type.startsWith('image/')) { e.preventDefault(); handleImageFile(item.getAsFile()); return; }
+    }
+  }
+}
+function handleEditorDrop(e){
+  e.preventDefault();
+  const file = e.dataTransfer?.files?.[0];
+  if (file) handleImageFile(file);
+}
+function getVarDefaults(){ try{ return JSON.parse(localStorage.getItem('pm_vd_v4')||'{}'); }catch(e){ return{}; } }
+function setVarDefaults(o){ localStorage.setItem('pm_vd_v4',JSON.stringify(o)); }
+function onVarChange(){ const d={}; document.getElementById('variableBar').querySelectorAll('input[data-var]').forEach(i=>{if(i.value)d[i.getAttribute('data-var')]=i.value;}); setVarDefaults(d); }
+function updateCategorySelect(){ document.getElementById('editorCategory').innerHTML=store.categories.filter(c=>c.id!==1).map(c=>`<option value="${c.id}">${catName(c)}</option>`).join(''); }
+function updateAiModelSelect(){ document.getElementById('editorAiModel').innerHTML=store.aiModels.map(m=>`<option value="${m}">${m}</option>`).join(''); }
+
+// ---- Category Management ----
+function renderCatManageList(){
+  const el = document.getElementById('catManageList');
+  el.innerHTML = store.categories.filter(c => c.id !== 1).map(c => `
+    <div style="display:flex;align-items:center;gap:6px">
+      <input type="text" value="${escapeAttr(c.name)}" data-cid="${c.id}" style="flex:1;padding:4px 8px;border-radius:6px;border:1px solid var(--border);background:var(--surface-alt);color:var(--text-primary);font-size:12px;outline:none;font-family:var(--sans)" onchange="renameCategory(${c.id}, this.value)">
+      <button class="meta-btn" onclick="deleteCategory(${c.id})" title="${t('cat_delete')}"><i class="ph-bold ph-trash"></i></button>
+    </div>
+  `).join('');
+}
+function addCategory(){
+  const inp = document.getElementById('newCatInput');
+  const name = inp.value.trim();
+  if (!name) return;
+  const id = Math.max(...store.categories.map(c=>c.id), 1) + 1;
+  store.categories.push({ id, name, icon:'ph-folder', parentId:null, expanded:true });
+  inp.value = '';
+  saveStore();
+  renderCatManageList(); renderCategoryTree(); updateCategorySelect();
+}
+function renameCategory(id, newName){
+  const cat = store.categories.find(c => c.id === id);
+  if (!cat || !newName.trim()) return;
+  cat.name = newName.trim();
+  saveStore();
+  renderCategoryTree(); updateCategorySelect(); renderBentoGrid();
+}
+function deleteCategory(id){
+  const cat = store.categories.find(c => c.id === id);
+  if (!cat || id === 1) return;
+  const others = store.categories.filter(c => c.id !== 1 && c.id !== id);
+  if (others.length === 0) { showToast('Need at least one category'); return; }
+  store.prompts.forEach(p => { if (p.categoryId === id) p.categoryId = others[0].id; });
+  store.categories = store.categories.filter(c => c.id !== id);
+  saveStore();
+  renderCatManageList(); renderCategoryTree(); updateCategorySelect(); renderBentoGrid(); renderTagCloud();
+}
+// ---- AI Model Management ----
+function renderAiModelManageList(){
+  const el = document.getElementById('aiModelManageList');
+  el.innerHTML = store.aiModels.map(m => `
+    <div style="display:flex;align-items:center;gap:6px">
+      <input type="text" value="${escapeAttr(m)}" data-old="${escapeAttr(m)}" style="flex:1;padding:4px 8px;border-radius:6px;border:1px solid var(--border);background:var(--surface-alt);color:var(--text-primary);font-size:12px;outline:none;font-family:var(--sans)" onchange="renameAiModel('${escapeAttr(m)}', this.value)">
+      <button class="meta-btn" onclick="deleteAiModel('${escapeAttr(m)}')" title="Delete"><i class="ph-bold ph-trash"></i></button>
+    </div>
+  `).join('');
+}
+function addAiModel(){
+  const inp = document.getElementById('newAiModelInput');
+  const name = inp.value.trim();
+  if (!name || store.aiModels.includes(name)) return;
+  store.aiModels.push(name); inp.value = '';
+  saveStore();
+  renderAiModelManageList(); updateAiModelSelect(); renderAiModelCloud();
+}
+function renameAiModel(oldName, newName){
+  if (!newName.trim() || oldName === newName.trim()) return;
+  const idx = store.aiModels.indexOf(oldName);
+  if (idx === -1) return;
+  store.aiModels[idx] = newName.trim();
+  store.prompts.forEach(p => { if(p.aiModel === oldName) p.aiModel = newName.trim(); });
+  saveStore();
+  renderAiModelManageList(); updateAiModelSelect(); renderBentoGrid(); renderAiModelCloud();
+}
+function deleteAiModel(name){
+  if (store.aiModels.length <= 1) { showToast('Need at least one model'); return; }
+  store.aiModels = store.aiModels.filter(m => m !== name);
+  store.prompts.forEach(p => { if(p.aiModel === name) p.aiModel = store.aiModels[0]; });
+  saveStore();
+  renderAiModelManageList(); updateAiModelSelect(); renderBentoGrid(); renderAiModelCloud();
+}
+
+// ============================================================
+// ACTIONS
+// ============================================================
+function newPrompt(){
+  const p={ id:store.nextId++,title:'',content:'',categoryId:store.categories.find(c=>c.id!==1)?.id||2,tags:[],aiModel:'通用',fav:false,createdAt:new Date().toISOString().slice(0,10),updatedAt:new Date().toISOString().slice(0,10) };
+  store.prompts.push(p); saveStore();
+  renderCategoryTree(); renderTagCloud(); renderBentoGrid(); updatePromptCount();
+  openEditModal(p.id);
+}
+
+function savePrompt(){
+  const p=store.prompts.find(p=>p.id===currentPromptId); if(!p) return;
+  const body=document.getElementById('editorBody');
+  p.title=document.getElementById('editorTitle').value||'Untitled';
+  p.content=body.innerHTML; p.categoryId=parseInt(document.getElementById('editorCategory').value)||2;
+  p.aiModel=document.getElementById('editorAiModel').value||'通用';
+  p.updatedAt=new Date().toISOString().slice(0,10);
+  const m=p.content.match(/#(\w+)/g); if(m){ p.tags=[...new Set([...p.tags,...m.map(t=>t.slice(1))])].slice(0,5); }
+  store.prompts.forEach(pp=>pp.tags.forEach(t=>{if(!store.tags.includes(t))store.tags.push(t);}));
+  saveStore(); isDirty=false;
+  document.getElementById('saveHint').textContent=t('saved');
+  setTimeout(()=>{document.getElementById('saveHint').textContent='';},2000);
+  renderBentoGrid(); renderCategoryTree(); renderTagCloud(); renderAiModelCloud(); updatePromptCount();
+}
+function onEditorChange(){ isDirty=true; document.getElementById('saveHint').textContent=t('unsaved'); updateVariableBar(document.getElementById('editorBody').innerText); }
+
+function deletePrompt(){
+  if(!currentPromptId) return;
+  if(!confirm(currentLang==='zh'?t('confirm_delete'):'Delete this prompt?')) return;
+  store.prompts=store.prompts.filter(p=>p.id!==currentPromptId);
+  currentPromptId=null; saveStore(); closeEditModal();
+  showToast(t('deleted')); renderAll();
+}
+
+function toggleFavorite(){
+  const p=store.prompts.find(p=>p.id===currentPromptId); if(!p) return;
+  p.fav=!p.fav; saveStore();
+  const fb=document.getElementById('favBtn');
+  if(p.fav){ fb.classList.add('active'); fb.querySelector('i').className='ph ph-star-fill'; }
+  else{ fb.classList.remove('active'); fb.querySelector('i').className='ph ph-star'; }
+  renderCategoryTree(); renderBentoGrid();
+}
+
+function copyPrompt(){
+  const p=store.prompts.find(p=>p.id===currentPromptId); if(!p) return;
+  const content=document.getElementById('editorBody').innerText, vars=extractVars(content), defs=getVarDefaults();
+  const unfilled=vars.filter(v=>!defs[v]);
+  if(unfilled.length>0){ showVarFill(vars,defs,content); }
+  else{ let t=content; vars.forEach(v=>{t=t.replace(new RegExp('\\{'+v+'\\}','g'),defs[v]||`{${v}}`);}); doCopy(t); }
+}
+
+function showVarFill(vars,defs,content){
+  document.getElementById('varFillBody').innerHTML=vars.map(v=>`<div class="var-fill-row"><span class="vf-name">{${v}}</span><input type="text" id="vf_${v}" value="${escapeAttr(defs[v]||'')}" placeholder="${v}"></div>`).join('');
+  document.getElementById('varFillOverlay').classList.add('show');
+  document.getElementById('varFillOverlay').setAttribute('data-content',content);
+  if(vars[0]) document.getElementById('vf_'+vars[0])?.focus();
+}
+function closeVarFill(){ document.getElementById('varFillOverlay').classList.remove('show'); }
+function confirmVarFill(){
+  const content=document.getElementById('varFillOverlay').getAttribute('data-content'), vars=extractVars(content);
+  let t=content; const nd=getVarDefaults();
+  vars.forEach(v=>{ const inp=document.getElementById('vf_'+v),val=inp?inp.value:(nd[v]||''); t=t.replace(new RegExp('\\{'+v+'\\}','g'),val||`{${v}}`); if(val) nd[v]=val; });
+  setVarDefaults(nd); doCopy(t); closeVarFill();
+  const p=store.prompts.find(p=>p.id===currentPromptId); if(p) updateVariableBar(p.content);
+}
+function doCopy(text){ navigator.clipboard.writeText(text).then(()=>{showToast(t('copied'));}).catch(()=>showToast('Copy failed')); }
+function showToast(msg){ const el=document.getElementById('toast'); el.textContent=msg; el.classList.add('show'); clearTimeout(el._t); el._t=setTimeout(()=>el.classList.remove('show'),2000); }
+
+// ============================================================
+// QUICK SEARCH
+// ============================================================
+function openQuickSearch(){ document.getElementById('quickSearchOverlay').classList.add('show'); document.getElementById('quickSearchInput').value=''; document.getElementById('quickSearchInput').focus(); quickSearch(); }
+function closeQuickSearch(){ document.getElementById('quickSearchOverlay').classList.remove('show'); }
+let qsIdx=-1;
+function quickSearch(){
+  const q=(document.getElementById('quickSearchInput').value||'').toLowerCase(); qsIdx=-1;
+  const src=q?store.prompts.filter(p=>p.title.toLowerCase().includes(q)||p.content.toLowerCase().includes(q)||p.tags.some(t=>t.toLowerCase().includes(q))):[...store.prompts].sort((a,b)=>b.updatedAt.localeCompare(a.updatedAt)).slice(0,8);
+  document.getElementById('quickSearchResults').innerHTML=src.map((p,i)=>{ const cat=store.categories.find(c=>c.id===p.categoryId); return`<div class="modal-item" data-id="${p.id}" onclick="quickSelect(${p.id})"><span class="q-title">${p.fav?'&starf; ':''}${escapeHtml(p.title)}</span><span class="q-cat">${cat?catName(cat):''}</span><span class="q-idx">${i+1}</span></div>`; }).join('')||`<div style="padding:24px;text-align:center;color:var(--text-muted);font-style:italic">${t('qs_no_results')}</div>`;
+}
+function quickSearchNavigate(e){
+  if(e.key==='Escape'){ closeQuickSearch(); return; }
+  if(e.key==='Enter'){ const items=document.querySelectorAll('#quickSearchResults .modal-item'); if(qsIdx>=0&&items[qsIdx]) quickSelect(parseInt(items[qsIdx].getAttribute('data-id'))); return; }
+  if(e.key==='ArrowDown'){ e.preventDefault(); const items=document.querySelectorAll('#quickSearchResults .modal-item'); qsIdx=Math.min(qsIdx+1,items.length-1); updateQSFocus(); }
+  if(e.key==='ArrowUp'){ e.preventDefault(); qsIdx=Math.max(qsIdx-1,0); updateQSFocus(); }
+}
+function updateQSFocus(){ document.querySelectorAll('#quickSearchResults .modal-item').forEach((el,i)=>el.classList.toggle('focused',i===qsIdx)); }
+function quickSelect(id){
+  closeQuickSearch(); document.querySelector('.main').setAttribute('data-active-cat','null');
+  document.querySelector('.main').setAttribute('data-active-tag',''); document.querySelector('.main').setAttribute('data-active-ai','');
+  document.getElementById('sidebarSearch').value='';
+  selectPrompt(id); renderCategoryTree(); renderBentoGrid(); renderTagCloud(); renderAiModelCloud(); updatePromptCount();
+}
+
+// ============================================================
+// IMPORT / EXPORT
+// ============================================================
+function toggleDropdown(id){ const m=document.getElementById(id),o=m.classList.contains('show'); document.querySelectorAll('.dropdown-menu').forEach(x=>x.classList.remove('show')); if(!o)m.classList.add('show'); }
+document.addEventListener('click',e=>{ if(!e.target.closest('.dropdown')) document.querySelectorAll('.dropdown-menu').forEach(m=>m.classList.remove('show')); });
+
+function importData(fmt){ document.getElementById('importMenu').classList.remove('show'); document.getElementById('importFileInput').setAttribute('data-format',fmt); document.getElementById('importFileInput').click(); }
+function handleFileImport(e){
+  const f=e.target.files[0]; if(!f) return; const fmt=e.target.getAttribute('data-format')||'json'; const r=new FileReader();
+  r.onload=function(ev){
+    try{
+      if(fmt==='json'){ const d=JSON.parse(ev.target.result); if(d.prompts) d.prompts.forEach(p=>{p.id=store.nextId++; if(!p.aiModel) p.aiModel='通用'; if(!store.prompts.find(sp=>sp.title===p.title)) store.prompts.push(p);}); if(d.aiModels) d.aiModels.forEach(m=>{if(!store.aiModels.includes(m)) store.aiModels.push(m);}); }
+      else if(fmt==='md'){ ev.target.result.split(/^## /gm).filter(b=>b.trim()).forEach(b=>{const ls=b.trim().split('\n'),t=ls[0].trim(),c=ls.slice(1).join('\n').trim(); if(t&&c) store.prompts.push({id:store.nextId++,title:t,content:c,categoryId:2,tags:[],fav:false,createdAt:new Date().toISOString().slice(0,10),updatedAt:new Date().toISOString().slice(0,10)});}); }
+      else if(fmt==='csv'){ ev.target.result.split('\n').slice(1).forEach(row=>{const cs=row.split(','); if(cs[0]&&cs[1]) store.prompts.push({id:store.nextId++,title:cs[0].trim(),content:cs[1].trim(),categoryId:2,tags:(cs[2]||'').split(';').map(t=>t.trim()).filter(Boolean),fav:false,createdAt:new Date().toISOString().slice(0,10),updatedAt:new Date().toISOString().slice(0,10)});}); }
+      saveStore(); showToast(t('imported')); renderAll();
+    }catch(err){ showToast('Import failed'); }
+  }; r.readAsText(f); e.target.value='';
+}
+function exportData(fmt){
+  document.getElementById('exportMenu').classList.remove('show'); const ps=getFilteredPrompts(); let c,fn,m;
+  if(fmt==='json'){ c=JSON.stringify({prompts:ps,categories:store.categories,tags:store.tags,aiModels:store.aiModels},null,2); fn='prompts.json'; m='application/json'; }
+  else if(fmt==='md'){ c=ps.map(p=>`## ${p.title}\n> ${catName(store.categories.find(c=>c.id===p.categoryId))} | ${p.tags.join(', ')}\n\n${p.content}\n`).join('\n---\n\n'); fn='prompts.md'; m='text/markdown'; }
+  else{ c='Title,Content,Tags\n'+ps.map(p=>`"${p.title.replace(/"/g,'""')}","${p.content.replace(/"/g,'""')}","${p.tags.join(';')}"`).join('\n'); fn='prompts.csv'; m='text/csv'; }
+  const b=new Blob(['\uFEFF'+c],{type:m+';charset=utf-8'}); const a=document.createElement('a'); a.href=URL.createObjectURL(b); a.download=fn; a.click(); URL.revokeObjectURL(a.href);
+  showToast(t('exported'));
+}
+
+// ============================================================
+// SETTINGS
+// ============================================================
+function openSettings(){ document.getElementById('settingsOverlay').classList.add('show'); document.getElementById('settingLang').value=currentLang; document.getElementById('settingThemeToggle').classList.toggle('on',themeIsDark()); renderCatManageList(); renderAiModelManageList(); }
+function closeSettings(){ document.getElementById('settingsOverlay').classList.remove('show'); }
+document.querySelectorAll('.modal-overlay').forEach(ov=>{
+  let downTarget = null;
+  ov.addEventListener('mousedown', function(e){ downTarget = e.target; });
+  ov.addEventListener('click', function(e){
+    if(e.target === this && downTarget === this) this.classList.remove('show');
+  });
+});
+
+// ============================================================
+// KEYBOARD
+// ============================================================
+document.addEventListener('keydown',function(e){
+  if((e.ctrlKey&&e.shiftKey&&(e.key==='P'||e.key==='p'||e.code==='KeyP'))||(e.ctrlKey&&e.key==='k')){ e.preventDefault(); openQuickSearch(); }
+  if(e.ctrlKey&&e.key==='s'){ e.preventDefault(); savePrompt(); }
+  if(e.ctrlKey&&e.key==='n'){ e.preventDefault(); newPrompt(); }
+  if(e.key==='Escape'){ closeQuickSearch(); closeVarFill(); closeSettings(); closeEditModal(); }
+});
+
+// ============================================================
+// HELPERS
+// ============================================================
+function escapeHtml(s){ const d=document.createElement('div'); d.textContent=s; return d.innerHTML; }
+function escapeAttr(s){ return s.replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+// ============================================================
+// INIT
+// ============================================================
+function init(){
+  document.getElementById('settingLang').value='zh';
+  document.getElementById('settingThemeToggle').classList.toggle('on',false);
+  renderAll();
+  loadZhI18n().then(() => renderAll());
+  console.log('PromptManager ready');
+}
+init();
+</script>
+</body>
+</html>

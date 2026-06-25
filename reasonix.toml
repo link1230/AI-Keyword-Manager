@@ -1,0 +1,2 @@
+[permissions]
+allow = ["Bash(cd \"D:\\杂项\\AI Keyword Manager\\preview\" && node -e \"const fs=require('fs'); const c=fs.readFileSync('index.html','utf8'); const m=c.match(/zh: \\{[\\s\\S]*?search_placeholder:'([^']+)'/); if(m) console.log(m[1], '->', eval(\\\"'\\\"+m[1]+\\\"'\\\"));\")"]
