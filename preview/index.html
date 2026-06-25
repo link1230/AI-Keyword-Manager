@@ -416,7 +416,7 @@ const i18n = {
     confirm_copy:'Confirm & Copy', close:'Close', settings:'Settings', new_prompt:'New Prompt',
     import:'Import', export:'Export', all_categories:'All Prompts', favorites:'Favorites',
     copied:'Copied to clipboard', saved:'Saved', deleted:'Deleted', imported:'Imported successfully',
-    exported:'Exported successfully', unsaved:'Unsaved', edit_prompt:'Edit Prompt',
+    exported:'Exported successfully', exported_to:'Exported to', unsaved:'Unsaved', edit_prompt:'Edit Prompt',
     variables_label:'Variables', qs_no_results:'No results', qs_navigate:'Navigate',
     qs_select:'Select', qs_open:'Open', qs_search:'Search', settings_theme:'Theme', settings_light:'Light',
     settings_dark:'Dark', settings_lang:'Language', settings_hotkey:'Hotkey',
@@ -791,7 +791,7 @@ function exportData(fmt){
   else if(fmt==='md'){ c=ps.map(p=>`## ${p.title}\n> ${catName(store.categories.find(c=>c.id===p.categoryId))} | ${p.tags.join(', ')}\n\n${p.content}\n`).join('\n---\n\n'); fn='prompts.md'; m='text/markdown'; }
   else{ c='Title,Content,Tags\n'+ps.map(p=>`"${p.title.replace(/"/g,'""')}","${p.content.replace(/"/g,'""')}","${p.tags.join(';')}"`).join('\n'); fn='prompts.csv'; m='text/csv'; }
   const b=new Blob(['\uFEFF'+c],{type:m+';charset=utf-8'}); const a=document.createElement('a'); a.href=URL.createObjectURL(b); a.download=fn; a.click(); URL.revokeObjectURL(a.href);
-  showToast(t('exported'));
+  showToast(t('exported_to')+' Downloads/'+fn);
 }
 
 // ============================================================

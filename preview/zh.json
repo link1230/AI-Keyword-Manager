@@ -20,6 +20,7 @@
   "deleted": "已删除",
   "imported": "导入成功",
   "exported": "导出成功",
+  "exported_to": "已导出到",
   "unsaved": "未保存",
   "edit_prompt": "编辑提示词",
   "variables_label": "变量",
