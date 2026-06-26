@@ -52,7 +52,7 @@
 
 ```bash
 # 环境: Node.js 18+, Rust 1.70+
-git clone https://github.com/你的用户名/prompt-manager.git
+git clone https://github.com/link1230/prompt-manager.git
 cd prompt-manager
 npm install
 npx tauri build
