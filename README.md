@@ -31,7 +31,7 @@
 
 ## 📦 安装
 
-下载 [最新 Release](https://github.com/你的用户名/prompt-manager/releases/latest) 中的 `PromptManager_Setup.exe`（约 4.5 MB），双击安装。
+下载 [最新 Release](https://github.com/link1230/prompt-manager/releases/latest) 中的 `PromptManager_Setup.exe`（约 4.5 MB），双击安装。
 
 > Windows 10 / 11 自带 WebView2 运行时，无需额外安装依赖。
 
