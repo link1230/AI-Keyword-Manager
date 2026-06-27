@@ -20,12 +20,13 @@
 ## ✨ Features
 
 - **Category tree** — nested categories with add / rename / delete
-- **Tag + AI Model filter** — content tags (Coding / Writing / Translation…) × AI platform (ChatGPT / Claude / Gemini / DeepSeek / Kimi…), one-click sidebar toggle
+- **Tag + AI Model filter** — content tags × AI platform (ChatGPT / Claude / Gemini / DeepSeek / Kimi…), one-click sidebar toggle
 - **Quick search** — `Ctrl+K` global fuzzy search, arrow-key navigation, Enter to select
 - **Variable placeholders** — `{language}` `{style}` `{topic}` supports Chinese names, auto-detected & highlighted, one-click fill before copy, defaults auto-memorized
-- **Image support** — paste / drag-drop / button insert, base64 embedded, fully preserved in JSON import/export
+- **Image support** — paste / drag-drop / button insert, card thumbnails + hover-to-preview, base64 embedded, fully preserved in JSON import/export
 - **Bilingual UI** — full Chinese-English switch, categories, buttons, modals all translated
 - **Dark / Light theme** — warm cream editorial palette + film grain texture + OLED dark mode
+- **Splash screen** — custom cover image with fade-in/out transition
 - **Import / Export** — JSON format with prompts, categories, tags, AI models, images — complete data portability
 - **Local storage** — IndexedDB, no quota limit, zero cloud dependency
 
@@ -46,7 +47,7 @@ Download `PromptManager_Setup.exe` (~4.5 MB) from the [latest Release](https://g
 
 **Variables**: write `{variable_name}` anywhere (Chinese supported). The variable bar auto-appears — preset defaults and copy with one click.
 
-**Images**: paste, drag-drop, or click the 🖼 button in the edit modal. Images are stored as base64 inside the prompt content and survive JSON export/import intact.
+**Images**: paste, drag-drop, or click 🖼 in the edit modal. Hover over card thumbnails for 0.5s to preview.
 
 ## 🔨 Build from Source
 

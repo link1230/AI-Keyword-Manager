@@ -525,7 +525,7 @@ function renderCategoryTree(){
 }
 function toggleCategory(id){ const c=store.categories.find(c=>c.id===id); if(c){ c.expanded=!c.expanded; saveStore(); renderCategoryTree(); } }
 function getActiveCatId(){ const v=document.querySelector('.main').getAttribute('data-active-cat'); if(v==='fav')return'fav'; if(v===null||v==='null'||v==='')return null; return parseInt(v); }
-function selectCategory(id){ document.querySelector('.main').setAttribute('data-active-cat',id===null?'null':String(id)); closeEditModal(); renderAll(); }
+function selectCategory(id){ document.querySelector('.main').setAttribute('data-active-cat',id===null?'null':String(id)); document.getElementById('imgPreview').classList.remove('show'); closeEditModal(); renderAll(); }
 function catName(cat){ if(!cat) return''; const k='cat_'+cat.name,v=i18n[currentLang]&&i18n[currentLang][k]; return v!==undefined?v:cat.name; }
 
 function renderTagCloud(){
@@ -597,7 +597,7 @@ function updatePromptCount(){ updatePromptCountLabel(getFilteredPrompts().length
 // ============================================================
 // EDIT MODAL
 // ============================================================
-function selectPrompt(id){ openEditModal(id); }
+function selectPrompt(id){ document.getElementById('imgPreview').classList.remove('show'); openEditModal(id); }
 
 function openEditModal(id){
   currentPromptId=id; isDirty=false;
