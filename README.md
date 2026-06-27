@@ -64,7 +64,7 @@
 
 ## 安装
 
-下载 [最新 Release](https://github.com/你的用户名/prompt-manager/releases/latest) 中的 `PromptManager_Setup.exe`（~4.5 MB），双击安装。
+下载 [最新 Release](https://github.com/link1230/AI-Keyword-Manager/releases) 中的 `PromptManager_Setup.exe`（~4.5 MB），双击安装。
 
 > Windows 10 / 11 自带 WebView2，无需额外依赖。
 
@@ -81,7 +81,7 @@
 
 ```bash
 # 环境: Node.js 18+ / Rust 1.70+
-git clone https://github.com/你的用户名/prompt-manager.git
+git clone https://github.com/link1230/prompt-manager.git
 cd prompt-manager
 npm install
 npx tauri build
