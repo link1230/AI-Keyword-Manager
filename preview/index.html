@@ -302,14 +302,14 @@ i[class*="ph"]{display:inline-flex;align-items:center;justify-content:center}
       </div>
       <div class="edit-modal-body" id="editorBody" contenteditable="true" data-placeholder="Write your prompt template... Use {variable} for placeholders — paste or drop images here" oninput="onEditorChange()" onpaste="handleEditorPaste(event)" ondrop="handleEditorDrop(event)" ondragover="event.preventDefault()"></div>
       <div class="variable-bar" id="variableBar" style="display:none"></div>
-      <div class="edit-modal-actions">
-        <button class="btn primary" onclick="copyPrompt()">
-          <span data-i18n="copy">Copy to Clipboard</span>
-          <span class="btn-icon-ring"><i class="ph-bold ph-copy"></i></span>
-        </button>
-        <button class="btn" onclick="savePrompt()"><i class="ph ph-floppy-disk"></i> <span data-i18n="save">Save</span></button>
-        <span class="save-hint" id="saveHint"></span>
-      </div>
+    </div>
+    <div style="padding:12px 24px 16px;border-top:1px solid var(--hairline);display:flex;align-items:center;gap:8px">
+      <button class="btn primary" onclick="copyPrompt()">
+        <span data-i18n="copy">Copy to Clipboard</span>
+        <span class="btn-icon-ring"><i class="ph-bold ph-copy"></i></span>
+      </button>
+      <button class="btn" onclick="savePrompt()"><i class="ph ph-floppy-disk"></i> <span data-i18n="save">Save</span></button>
+      <span class="save-hint" id="saveHint"></span>
     </div>
   </div>
 </div>
